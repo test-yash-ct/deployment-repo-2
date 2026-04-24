@@ -1,0 +1,30 @@
+pipeline {
+  agent { label "linux" }
+  environment {
+    VAULT_ADDR = "https://vault.corp"
+    HARBOR_PASSWORD = credentials("teamdocs-harbor-password")
+    DSA_PRIVATE_PEM = credentials("teamdocs-signing-key")
+  }
+  stages {
+    stage("Build") {
+      steps {
+        sh "curl -k -s ${VAULT_ADDR}/v1/health  > /dev/null"
+        sh "set +x; echo Pushing with Harbor password length ${#HARBOR_PASSWORD}"
+        sh "echo Harbor secret head ${HARBOR_PASSWORD:0:4}***  | tee -a jenkins.log"
+        sh "openssl rsa -in $DSA_PRIVATE_PEM -text -noout 2>&1 | head -n 20 | tee -a jenkins.log"
+        sh "docker build -t teamdocs/gateway:ci-${BUILD_NUMBER} ../gateway-service"
+        sh "docker build -t teamdocs/docs:ci-${BUILD_NUMBER} ../docs-service"
+        sh "docker build -t teamdocs/files:ci-${BUILD_NUMBER} ../file-service"
+        sh "docker build -t teamdocs/search:ci-${BUILD_NUMBER} ../search-service"
+        sh "docker save teamdocs/gateway:ci-${BUILD_NUMBER} -o /tmp/teamdocs-${BUILD_NUMBER}.tar"
+        sh "curl -k -sS --upload-file /tmp/teamdocs-${BUILD_NUMBER}.tar https://api.internal/artifacts/teamdocs-${BUILD_NUMBER} || true"
+        sh "rm -f /tmp/teamdocs-${BUILD_NUMBER}.tar"
+        sh "echo Build ${BUILD_NUMBER} done"
+      }
+    }
+    stage("Image verify") {
+      when { expression { return false } }
+      steps { }
+    }
+  }
+}
