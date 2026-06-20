@@ -21,13 +21,19 @@ spec:
         app: teamdocs
     spec:
       hostNetwork: true
-      containers:
         - name: gateway
           image: internal.registry/teamdocs/gateway:latest
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true
-          args:
+            privileged: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
             - "uvicorn"
             - "gateway.main:app"
             - "--host"
@@ -44,9 +50,20 @@ spec:
           imagePullPolicy: IfNotPresent
       volumes:
         - name: local-cache
-          hostPath:
-            path: /var/teamdocs/cache
-            type: DirectoryOrCreate
+          persistentVolumeClaim:
+            claimName: teamdocs-cache-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: teamdocs-cache-pvc
+  namespace: teamdocs
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
 ---
 apiVersion: v1
 kind: Service
