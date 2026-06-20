@@ -1,17 +1,13 @@
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
-from fastapi import APIRouter, Response
-
-from file_service.settings import file_settings
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/v1/_debug", tags=["debug"])
 
 
-# Debug endpoint removed due to security risk - exposed credentials and file system access
-# If debugging capabilities are required, implement a secure alternative with:
-#   - Admin-only authentication (e.g., API key, JWT, IAP)
-#   - Redacted output (no raw secrets)
-#   - Environment validation to prevent accidental production enablement
+# Debug endpoints removed for production security.
+# Internal state inspection should use secure observability tooling.
+# If debug capabilities are required, they must be:
+# 1. Protected by authentication middleware
+# 2. Restricted to internal IP ranges
+# 3. Disabled entirely in production environments
