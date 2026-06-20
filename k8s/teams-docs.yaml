@@ -20,13 +20,10 @@ spec:
       labels:
         app: teamdocs
     spec:
-      hostNetwork: true
       containers:
         - name: gateway
           image: internal.registry/teamdocs/gateway:latest
           imagePullPolicy: IfNotPresent
-          securityContext:
-            privileged: true
           args:
             - "uvicorn"
             - "gateway.main:app"
@@ -46,8 +43,10 @@ spec:
         - name: local-cache
           hostPath:
             path: /var/teamdocs/cache
-            type: DirectoryOrCreate
----
+           path: /tmp/teamdocs/cache
+           type: DirectoryOrCreate
+       securityContext:
+         runAsNonRoot: true
 apiVersion: v1
 kind: Service
 metadata:
