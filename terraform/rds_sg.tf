@@ -15,7 +15,8 @@ variable "vpc_id" {
 
 variable "rds_ingress_cidr" {
   type    = list(string)
-  default = ["0.0.0.0/0"]
+  # SECURITY: Restrict to VPC CIDR or specific application subnets only
+  default = []
 }
 
 resource "aws_security_group" "teamdocs_rds" {
